@@ -3,7 +3,8 @@ import '@/components/Pagination.scss';
 
 export class Pagination extends Component {
     constructor({
-        props: {app, cb}
+        app,
+        cb,
     }) {
         super({app});
         this.cb = cb;

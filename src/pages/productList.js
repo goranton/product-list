@@ -5,6 +5,30 @@ import { Component } from '@/libs/core';
 import { menuVirtualNode as menu } from '@/libs/dom';
 import productService from '@/services/product.service';
 
+const paginationComponentData = {
+    app: '#pagination',
+    cb(v) {
+        if (this.productOptions.page === +v || this.loading) {
+            return
+        }
+        this.changePage(+v);
+        this.getProducts();
+    },
+    props: {  
+        pageCount() { return 0; },
+        paginate: {},
+    }
+}
+
+const productListComponentData = {
+    app: '#products-list',
+    error: null,
+    props: {
+        items: [],
+        view: 'list',
+    }
+}
+
 class ProductList extends Component {
     constructor() {
         super({
@@ -19,24 +43,23 @@ class ProductList extends Component {
         this.loading = false;
 
         this.productOptions = this.router.queries;
-        
-        this.products = {
-            items: [],
-            view: this.router.queries.view || 'list',
-        };
 
-        this.pagination = {
+        this.products = {
+            ...productListComponentData,
             props: {
-                app: '#pagination',
-                cb: (v) => {
-                    if (this.productOptions.page === +v || this.loading) {
-                        return
-                    }
-                    this.changePage(+v);
-                    this.getProducts();
-                },
+                ...productListComponentData.props,
+                view: this.router.queries.view || 'list'
             }
         };
+
+        this.pagination = this.freshPagination();
+    }
+
+    freshPagination() {
+        return {
+            ...paginationComponentData,
+            cb: paginationComponentData.cb.bind(this)
+        }
     }
 
     /**
@@ -46,7 +69,7 @@ class ProductList extends Component {
         this.loading = true;
         try {
             const { search, sort: sort_direction, sort_field, page} = this.productOptions;
-            const {data, ...pagination} = await productService.list({
+            const {data: items , ...pagination} = await productService.list({
                 search, 
                 sort_direction, 
                 sort_field,
@@ -54,10 +77,14 @@ class ProductList extends Component {
             });
 
             this.pagination.props = pagination;
-            this.products.items = data;
+            this.products.props = {
+                ...this.products.props,
+                items,
+            };
         } catch (e) {
             if (e.response && e.response.status === 404) {
-                this.products.items = [];
+                this.products.error = e.response.data;
+                this.pagination.props = this.freshPagination().props;
             }
         } finally {
             this.loading = false;
@@ -74,7 +101,10 @@ class ProductList extends Component {
      * @param {Event} e change event instance
      */
     changeViewMode(e) {
-        this.products.view = e.target.value;
+        this.products.props = {
+            ...this.products.props,
+            view: e.target.value,
+        };
         this.router.updateQuery('view', e.target.value);
     }
 
@@ -110,7 +140,7 @@ class ProductList extends Component {
             { value: 'name', title: 'имя' },
             { value: 'price', title: 'цена' },
         ]);
-        const changeViewNode = virtualSelect(h, this.products.view, debounce(this.changeViewMode.bind(this), 500), [
+        const changeViewNode = virtualSelect(h, this.products.props.view, debounce(this.changeViewMode.bind(this), 500), [
             { value: 'list', title: 'список' },
             { value: 'table', title: 'таблица' },
             { value: 'grid', title: 'сетка' },

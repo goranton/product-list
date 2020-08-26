@@ -7,7 +7,7 @@ export class Component {
         components = {},
         mounted = () => {},
     } = data) {
-        this.app = document.querySelector(app);
+        this._app = document.querySelector(app); 
         this.data = data;
 
         this.mounted = mounted;
@@ -18,7 +18,7 @@ export class Component {
 
         this.childs = [];
 
-        if (this.app) {
+        if (this._app) {
             this.flush();
         }
     }
@@ -87,6 +87,8 @@ export class Component {
      */
     bindComponentAndProps(props, component) {
         Object.keys(props).forEach(key => {
+            component[key] = props[key];
+
             Object.defineProperty(props, key, {
                 get: () => component[key],
                 set: (value) => {
@@ -112,17 +114,17 @@ export class Component {
             this.childs.push(async () => await this.loadComponent(tag, attributes && attributes.props));
         }
 
-        return new VNode(this.app, {tag, attributes, events, child});
+        return new VNode(this._app, {tag, attributes, events, child});
     }
 
     /**
      * Remove parent childrens.
      */
     flush() {
-        while (this.app.firstChild) {
-            this.app.removeChild(this.app.lastChild);
+        while (this._app.firstChild) {
+            this._app.removeChild(this._app.lastChild);
         }
-        this.app.innerHtml = '';
+        this._app.innerHtml = '';
 
         this.childs = [];
         this.loadedComponents = [];
@@ -134,6 +136,9 @@ export class Component {
     update() {
         this.flush();
         this.create();
+        if (this.hasOwnProperty('error')) {
+            this.error = null;
+        }
     }
 
     /**

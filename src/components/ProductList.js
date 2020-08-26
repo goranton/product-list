@@ -3,16 +3,15 @@ import { Component } from '../libs/core';
 import '@/components/ProductList.scss';
 
 export class ProductList extends Component {
-    constructor({view}) {
+    constructor({app}) {
         super({
-            app: '#products-list',
+            app,
             components: {
                 'product-item-list': async () => import('@/components/ProductItem'),
             },
         });
 
         this.vault.clear();
-        this.view = view;
     }
 
     /**
@@ -23,12 +22,12 @@ export class ProductList extends Component {
      * @param {*} sort_field Sort field name
      */
     async renderItems (h) {
-        return this.items.map((product, key) => {
+        return this.props.items.map((product, key) => {
             const parent = `product-item_${key}`;
 
             let tag = 'div';
 
-            switch(this.view) {
+            switch(this.props.view) {
                 case 'list':
                     tag = 'li';
                     break;
@@ -37,32 +36,37 @@ export class ProductList extends Component {
                     break;
             }
 
-            return h(tag, {id: parent, class: `products__${this.view}-item`}, {
+            return h(tag, {id: parent, class: `products__${this.props.view}-item`}, {
                 click: (e) => {
                     this.vault.setItem('selectProduct', product);
                     this.router.goto(`/products/${key}`);
                 }
             }, [
                 h('product-item-list', {
-                    props: { key, product, mode: this.view }
+                    props: { key, product, mode: this.props.view }
                 })
             ]);
         });
     }
 
     async template(h) {
-        if (this.items) {
-            console.log(this);
-            const items = await this.renderItems(h);
+        if (this.error) {
+            // error
+            return [h('h1', null, null, [this.error])];
+        }
 
-            if (!items.length) {
-                return [h('h1', null, null, ['Ничего не найдено.'])]
-            }
-    
-            switch (this.view) {
+        if (!this.props) {
+            return []; // loading...
+        }
+
+        const items = this.props.items;
+
+        if (items) {
+            const children = await this.renderItems(h);
+            switch (this.props.view) {
                 case 'list':
                     return [
-                        h('ul', {class: 'products__list'}, null, items),
+                        h('ul', {class: 'products__list'}, null, children),
                     ];
                 case 'table':
                     return [
@@ -72,14 +76,12 @@ export class ProductList extends Component {
                                 h('th', null, null, ['Изображение']),
                                 h('th', null, null, ['Цена']),
                             ]),
-                            ...items,
+                            ...children,
                         ])
                     ];
             }
     
-            return [h('div', {class: 'products__grid'}, null, items)];
+            return [h('div', {class: 'products__grid'}, null, children)];
         }
-
-        return []; // loading...
     }
 }
