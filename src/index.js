@@ -37,6 +37,8 @@ router.push('/', () => {
     }
 
     component.create();
+
+    return component;
 });
 
 /**
@@ -50,7 +52,17 @@ router.push('/products', () => {
         },
     });
 
-    component.productOptions = router.queries;
+    const {
+        search = '',
+        sort = 'asc',
+        sort_field = 'name',
+    } = router.queries;
+
+    component.productOptions = {
+        search,
+        sort,
+        sort_field,
+    };
 
     /**
      * Filter products list
@@ -115,6 +127,8 @@ router.push('/products', () => {
 
 
     component.create();
+
+    return component;
 });
 
 router.init();

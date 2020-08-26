@@ -6,6 +6,7 @@ export class Router {
         this.mode = mode;
         this.root = '/';
         this.queries = {};
+        this.last = null;
 
         const queries = window.location.search;
 
@@ -85,11 +86,12 @@ export class Router {
             window.location.hash = `#${this.root}${sigment}`;
         }
 
+        this.last.destroy();
         this.init();
     }
 
     init() {
-        this.current().cb.apply({});
+        this.last = this.current().cb.apply({});
     }
 };
 
@@ -164,6 +166,10 @@ export class Component {
         });
     }
 
+    destroy() {
+        delete this;
+    }
+
     /**
      * Return virtual nodes
      */
@@ -209,10 +215,12 @@ export class Component {
      * @param {Object} component component instance 
      */
     bindComponentAndProps(props, component) {
+        console.log(props);
         Object.keys(props).forEach(key => {
             Object.defineProperty(props, key, {
                 get: () => component[key],
                 set: (value) => {
+                    console.log(value);
                     component[key] = value;
                     component.update();
                     return true;
