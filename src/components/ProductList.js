@@ -11,6 +11,7 @@ export class ProductList extends Component {
             },
         });
 
+        this.vault.clear();
         this.view = view;
     }
 
@@ -36,7 +37,12 @@ export class ProductList extends Component {
                     break;
             }
 
-            return h(tag, {id: parent, class: `products__${this.view}-item`}, null, [
+            return h(tag, {id: parent, class: `products__${this.view}-item`}, {
+                click: (e) => {
+                    this.vault.setItem('selectProduct', product);
+                    this.router.goto(`/products/${key}`);
+                }
+            }, [
                 h('product-item-list', {
                     props: { key, product, mode: this.view }
                 })

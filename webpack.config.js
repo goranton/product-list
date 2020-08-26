@@ -33,6 +33,7 @@ module.exports = {
     output: {
         filename: '[name].bundle.js',
         path: OUTPUT_DIR,
+        publicPath: '/',
     },
     resolve: {
         extensions: [".js"],
@@ -48,6 +49,6 @@ module.exports = {
         })
     ],
     devServer: {
-        historyApiFallback: true
+        historyApiFallback: true,
     }
 };

@@ -16,15 +16,22 @@ class ProductList extends Component {
             mounted() {this.getProducts()},
         });
 
+        this.loading = false;
+
         this.productOptions = this.router.queries;
+        
         this.products = {
             items: [],
             view: this.router.queries.view || 'list',
         };
+
         this.pagination = {
             props: {
                 app: '#pagination',
                 cb: (v) => {
+                    if (this.productOptions.page === +v || this.loading) {
+                        return
+                    }
                     this.changePage(+v);
                     this.getProducts();
                 },
@@ -36,6 +43,7 @@ class ProductList extends Component {
      * Send request to server for fetch products
      */
     async getProducts() {
+        this.loading = true;
         try {
             const { search, sort: sort_direction, sort_field, page} = this.productOptions;
             const {data, ...pagination} = await productService.list({
@@ -51,6 +59,8 @@ class ProductList extends Component {
             if (e.response && e.response.status === 404) {
                 this.products.items = [];
             }
+        } finally {
+            this.loading = false;
         }
     }
 

@@ -7,6 +7,7 @@ export class Router {
         this.root = '/';
         this.queries = {};
         this.last = null;
+        this.find = null;
 
         const queries = window.location.search;
 
@@ -16,11 +17,21 @@ export class Router {
 
     }
 
+    back() {
+        if (this.mode !== 'history') {
+            throw new Error('Only if history mode');
+        }
+
+        window.history.back();
+    }
+
     /**
      * Normalize route sigment
      * @param {String} path Sigment of route
      */
     normalizePath(path) {
+        if (path instanceof RegExp) return path;
+
         return path.replace(/^\//gi, '').toLocaleLowerCase();
     }
 
@@ -29,7 +40,22 @@ export class Router {
      * @param {String} path Sigment of route
      */
     findRoute(path) {
-        return this.routes.find(route => route.path === this.normalizePath(path))
+        const normalize = this.normalizePath(path);
+        this.find = this.routes.reduce((find, route) => {
+            if (route.path === normalize) {
+                return route;
+            }
+
+
+            if (route.path instanceof RegExp && route.path.test(path)) {
+                return {...route, path: normalize};
+            }
+
+            return find;
+        }, null);
+
+
+        return this.find;
     }
     
     /**
@@ -38,7 +64,10 @@ export class Router {
      * @param {String} cb Callback when initalize
      */
     push(path, cb) {
-        this.routes.push({path: this.normalizePath(path), cb});
+        this.routes.push({
+            path: this.normalizePath(path), 
+            cb
+        });
         return this;
     }
 
@@ -46,6 +75,8 @@ export class Router {
      * Find and return route node by location params
      */
     current() {
+        if (this.find) return this.find;
+
         return this.findRoute(this.mode === 'history' ? window.location.pathname : window.location.hash);
     }
 
@@ -72,12 +103,11 @@ export class Router {
     goto(path) {
         const find = this.findRoute(path);
 
-        if (!this.findRoute) {
+        if (!find) {
             return;
         }
 
         this.queries = {};
-
         const sigment = `${this.root}${find.path}`;
 
         if (this.mode === 'history') {
@@ -91,6 +121,10 @@ export class Router {
     }
 
     init() {
-        this.last = this.current().cb.apply({}, [this]);
+        const current = this.current();
+
+        if (!current) return;
+
+        this.last = current.cb.apply({}, [this]);
     }
 };

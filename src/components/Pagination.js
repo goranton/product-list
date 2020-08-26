@@ -13,7 +13,7 @@ export class Pagination extends Component {
 
     paginationItem(h, value) {
         return h('li', {
-            class: 'pagination__item',
+            class: `pagination__item ${+value === this.props.paginate.current_page ? 'active' : ''}`,
         }, {
             click: () => this.cb(value),
         }, [value.toString()]);
