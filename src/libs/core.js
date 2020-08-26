@@ -151,6 +151,8 @@ export class Component {
         this.loadedComponents = {};
         this.vNodes = [];
 
+        this.childs = [];
+
         if (this.app) {
             this.flush();
         }
@@ -159,11 +161,11 @@ export class Component {
     /**
      * Generate virtual node tree and render component
      */
-    create() {
-        this.generateVNodeTree().then((vNodes) => {
-            this.vNodes = vNodes;
-            this.render();
-        });
+    async create() {
+        this.vNodes = await this.generateVNodeTree();
+        await this.render();
+        // render queue
+        this.childs.forEach(async (child) => await child());
     }
 
     destroy() {
@@ -206,6 +208,8 @@ export class Component {
         const loaded = this.loadedComponents[name] = new componentClass(props);
         this.bindComponentAndProps(props, loaded);
 
+        loaded.create();
+
         return loaded;
     }
 
@@ -215,12 +219,10 @@ export class Component {
      * @param {Object} component component instance 
      */
     bindComponentAndProps(props, component) {
-        console.log(props);
         Object.keys(props).forEach(key => {
             Object.defineProperty(props, key, {
                 get: () => component[key],
                 set: (value) => {
-                    console.log(value);
                     component[key] = value;
                     component.update();
                     return true;
@@ -240,8 +242,7 @@ export class Component {
         const componentKeys = Object.keys(this.components);
 
         if (componentKeys.includes(tag)) {
-            const component = await this.loadComponent(tag, attributes && attributes.props);
-            return (await component.generateVNodeTree())[0]; // return only parent node
+            this.childs.push(async () => await this.loadComponent(tag, attributes && attributes.props));
         }
 
         return new VNode(this.app, {tag, attributes, events, child});
@@ -270,7 +271,7 @@ export class Component {
      * @param {Node} parent Parent dom element
      * @param {Array} nodes Virtual nodes
      */
-    render(parent, nodes = this.vNodes) {
+    async render(parent, nodes = this.vNodes) {
         nodes.forEach(async (vNode) => {
             let element;
             vNode = await vNode;
