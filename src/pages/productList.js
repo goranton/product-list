@@ -16,25 +16,10 @@ class ProductList extends Component {
             mounted() {this.getProducts()},
         });
 
-        const {
-            search = '',
-            sort = 'asc',
-            sort_field = 'name',
-            view,
-            page,
-        } = this.router.queries;
-
-        console.log(this.router.queries);
-
-        this.productOptions = {
-            search,
-            sort,
-            sort_field,
-            page,
-        };
+        this.productOptions = this.router.queries;
         this.products = {
             items: [],
-            view,
+            view: this.router.queries.view || 'list',
         };
         this.pagination = {
             props: {

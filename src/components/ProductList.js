@@ -1,5 +1,7 @@
 import { Component } from '../libs/core';
 
+import '@/components/ProductList.scss';
+
 export class ProductList extends Component {
     constructor({view}) {
         super({
@@ -34,7 +36,7 @@ export class ProductList extends Component {
                     break;
             }
 
-            return h(tag, {id: parent}, null, [
+            return h(tag, {id: parent, class: `products__${this.view}-item`}, null, [
                 h('product-item-list', {
                     props: { key, product, mode: this.view }
                 })
@@ -54,11 +56,11 @@ export class ProductList extends Component {
             switch (this.view) {
                 case 'list':
                     return [
-                        h('ul', null, null, items),
+                        h('ul', {class: 'products__list'}, null, items),
                     ];
                 case 'table':
                     return [
-                        h('table', null, null, [
+                        h('table', {class: 'products__table'}, null, [
                             h('tr', null, null, [
                                 h('th', null, null, ['Название']),
                                 h('th', null, null, ['Изображение']),
@@ -69,7 +71,7 @@ export class ProductList extends Component {
                     ];
             }
     
-            return [h('div', null, null, items)];
+            return [h('div', {class: 'products__grid'}, null, items)];
         }
 
         return []; // loading...

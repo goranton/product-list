@@ -1,0 +1,18 @@
+$pagination-item-bg: #74b9ff;
+$pagination-item-bg-hover: darken($pagination-item-bg, 10%);
+
+.pagination {
+    background-color: $pagination-item-bg;
+    margin: 0 auto;
+
+    &__item {
+        display: inline-block;
+        padding: 10px;
+        cursor: pointer;
+        background-color: $pagination-item-bg;
+
+        &:hover {
+            background-color: $pagination-item-bg-hover;
+        }
+    }
+}

@@ -1,4 +1,5 @@
 import { Component } from '@/libs/core';
+import '@/components/Pagination.scss';
 
 export class Pagination extends Component {
     constructor({
@@ -11,7 +12,9 @@ export class Pagination extends Component {
     }
 
     paginationItem(h, value) {
-        return h('li', null, {
+        return h('li', {
+            class: 'pagination__item',
+        }, {
             click: () => this.cb(value),
         }, [value.toString()]);
     }
@@ -33,9 +36,13 @@ export class Pagination extends Component {
                 finish = total;
             }
 
-            return Array.from({length: finish - start}).map((_, index) => {
+            const items =  Array.from({length: finish - start}).map((_, index) => {
                 return start + index;
             }).map(value => this.paginationItem(h, value));
+
+            return [
+                h('ul', {class: 'pagination'}, null, items),
+            ];
         }
 
         return [];
