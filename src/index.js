@@ -1,5 +1,6 @@
 import { debounce } from 'debounce';
-import { Router, Component } from '@/libs/core';
+import { Component } from '@/libs/core';
+import { Router } from '@/libs/router';
 
 const router = new Router('history');
 
