@@ -1,36 +1,26 @@
 import { Router } from '@/libs/router';
 import { Component } from '@/libs/core';
+
 import vault from '@/libs/vault';
-
-
-import homePage from '@/pages/home';
-import productList from '@/pages/productList';
 
 const router = new Router('history');
 
-router.push('/', homePage);
-router.push('/products', productList);
-router.push(/products\/[0-9]$/gi, () => {
-    const component = new Component({
-        app: '#root',
-    });
+const requirePage = require.context('@/pages', false, /\.js$/);
 
-    component.template = (async function (h) {
-        const selectProduct = this.vault.getItem('selectProduct');
+requirePage.keys().forEach(path => {
+    // dynamic require pages
+    const loadedPage = requirePage(path).default;
 
-        return [
-            h('a', null, {
-                click: () => this.router.goto('/products')
-            }, ['Продукты']),
-            h('h1', null, null, [selectProduct.name]),
-            h('div', null, null, [selectProduct.price.toString()]),
-            h('img', {src: selectProduct.image, style: 'width: 300px'}, null, []),
-        ];
-    }).bind(component);
+    let props = loadedPage; 
 
-    component.create();
+    if (!loadedPage.hasOwnProperty('path')) {
+        props = {
+            path: path.slice(0, -3).slice(1),
+            cb: loadedPage,
+        }
+    }
 
-    return component;
+    router.push(props.path, props.cb);
 });
 
 Component.prototype.vault = vault;

@@ -7,13 +7,6 @@ import productService from '@/services/product.service';
 
 const paginationComponentData = {
     app: '#pagination',
-    cb(v) {
-        if (this.productOptions.page === +v || this.loading) {
-            return
-        }
-        this.changePage(+v);
-        this.getProducts();
-    },
     props: {  
         pageCount() { return 0; },
         paginate: {},
@@ -44,21 +37,37 @@ class ProductList extends Component {
 
         this.productOptions = this.router.queries;
 
-        this.products = {
+        this.products = this.freshProductsProps();
+
+        this.pagination = this.freshPaginationProps();
+    }
+
+    /**
+     * Return default properties from product list component
+     */
+    freshProductsProps() {
+        return {
             ...productListComponentData,
             props: {
                 ...productListComponentData.props,
                 view: this.router.queries.view || 'list'
             }
-        };
-
-        this.pagination = this.freshPagination();
+        };   
     }
 
-    freshPagination() {
+    /**
+     * Return default properties from pagination component
+     */
+    freshPaginationProps() {
         return {
             ...paginationComponentData,
-            cb: paginationComponentData.cb.bind(this)
+            cb: (v) => {
+                if (this.productOptions.page === +v || this.loading) {
+                    return
+                }
+                this.changePage(+v);
+                this.getProducts();
+            }
         }
     }
 
@@ -91,6 +100,10 @@ class ProductList extends Component {
         }
     }
 
+    /**
+     * Update selected page number
+     * @param {Number} page num of page
+     */
     changePage(page) {
         this.productOptions.page = page;
         this.router.updateQuery('page', page);
@@ -172,8 +185,11 @@ class ProductList extends Component {
 }
 
 
-export default function () {
-    const component = new ProductList();
-    component.create();
-    return component;
-}
+export default {
+    path: '/products',
+    cb: function () {
+        const component = new ProductList();
+        component.create();
+        return component;
+    }
+};
