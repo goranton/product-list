@@ -5,9 +5,12 @@ export class Component {
         app,
         data = {},
         components = {},
+        mounted = () => {},
     } = data) {
         this.app = document.querySelector(app);
         this.data = data;
+
+        this.mounted = mounted;
 
         this.components = components;
         this.loadedComponents = {};
@@ -28,9 +31,11 @@ export class Component {
         await this.render();
         // render queue
         this.childs.forEach(async (child) => await child());
+        this.mounted.call(this);
     }
 
     destroy() {
+        this.flush(); // remove event listeners
         delete this;
     }
 
@@ -118,6 +123,9 @@ export class Component {
             this.app.removeChild(this.app.lastChild);
         }
         this.app.innerHtml = '';
+
+        this.childs = [];
+        this.loadedComponents = [];
     }
 
     /**

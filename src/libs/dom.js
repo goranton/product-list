@@ -39,3 +39,15 @@ export class VNode {
         return element;
     }
 }
+
+
+export function virtualSelect(h, defaultValue, clb, options) {
+    return h('select', null, {
+        change: clb,
+    }, options.map(({value, title}) => {
+        return h('option', { 
+            value,
+            ...(defaultValue === value ? {selected: true} : {})
+        }, null, [title]);
+    }))
+}

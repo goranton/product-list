@@ -1,4 +1,3 @@
-import productService from '@/services/product.service';
 import { Component } from '../libs/core';
 
 export class ProductList extends Component {
@@ -6,37 +5,23 @@ export class ProductList extends Component {
         search = '',
         sort = 'asc',
         sort_field = 'name',
+        view = 'list',
+        items = [],
     } = {}) {
         super({
             app: '#products-list',
+            components: {
+                'product-item-list': async () => import('@/components/ProductItem'),
+            },
         });
 
         this.search = search;
         this.sort = sort;
         this.sort_field = sort_field;
-    }
 
-    /**
-     * Render virtal dom visualization of product
-     * @param {Function} h render virtual node
-     * @param {String} mode vision mode
-     * @param {Object} product Product instance 
-     */
-    productItem(h, mode, {name, image, price, index: id}) {
-        // todo: Make more view presentations
-        switch (mode) {
-            default:
-                return h('li', {class: 'product-list__item'}, null, [
-                    h('h2', null, {
-                        click: () => {
-                            
-                        }
-                    }, [name]),
-                    h('img', {src: image, style: 'width: 200px;'}, null, []),
-                    h('p', null, null, [price.toString()]),
-                ]);
-        }
-    };
+        this.items = items; 
+        this.view = view;
+    }
 
     /**
      * Render virtual node visualization of product list
@@ -45,20 +30,54 @@ export class ProductList extends Component {
      * @param {*} sort_direction Sort direction type
      * @param {*} sort_field Sort field name
      */
-    async renderItems (search, h, sort_direction, sort_field) {
-        try {
-            const {data, ...paginate} = await productService.list({search, sort_direction, sort_field});
-            return data.map((product, index) => this.productItem(h, 'list', {index, ...product}));
-        } catch (e) {
-            if (e.response.status === 404) {
-                return [h('h1', null, null, ['ничего не найдено'])];
+    async renderItems (h) {
+        return this.items.map((product, key) => {
+            const parent = `product-item_${key}`;
+
+            let tag = 'div';
+
+            switch(this.view) {
+                case 'list':
+                    tag = 'li';
+                    break;
+                case 'table':
+                    tag = 'tr';
+                    break;
             }
 
-            alert('Что-то пошло не так. Пожалуйста попробуйте позже.')
-        }
+            return h(tag, {id: parent}, null, [
+                h('product-item-list', {
+                    props: { key, product, mode: this.view }
+                })
+            ]);
+        });
     }
 
     async template(h) {
-        return [h('ul', null, null, await this.renderItems(this.search, h, this.sort, this.sort_field))];
+        const items = await this.renderItems(h);
+
+        if (!items.length) {
+            return [h('h1', null, null, ['Ничего не найдено.'])]
+        }
+
+        switch (this.view) {
+            case 'list':
+                return [
+                    h('ul', null, null, items),
+                ];
+            case 'table':
+                return [
+                    h('table', null, null, [
+                        h('tr', null, null, [
+                            h('th', null, null, ['Название']),
+                            h('th', null, null, ['Изображение']),
+                            h('th', null, null, ['Цена']),
+                        ]),
+                        ...items,
+                    ])
+                ];
+        }
+
+        return [h('div', null, null, items)];
     }
 }
