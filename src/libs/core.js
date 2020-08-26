@@ -154,6 +154,9 @@ export class Component {
         }
     }
 
+    /**
+     * Generate virtual node tree and render component
+     */
     create() {
         this.generateVNodeTree().then((vNodes) => {
             this.vNodes = vNodes;
@@ -161,10 +164,16 @@ export class Component {
         });
     }
 
+    /**
+     * Return virtual nodes
+     */
     async template() {
         throw new Error('must be implement.');
     }
 
+    /**
+     * Generate virtual node tree by template
+     */
     async generateVNodeTree() {
         if (typeof this.template === 'object') {
             return this.template;
@@ -173,6 +182,11 @@ export class Component {
         return await this.template.call(this, this.h.bind(this));
     }
 
+    /**
+     * Load component and bind reactive props
+     * @param {String} name component name
+     * @param {Object} props list of component properties
+     */
     async loadComponent(name, props = {}) {
         if (!this.components.hasOwnProperty(name)) return;
         
@@ -183,12 +197,17 @@ export class Component {
         const component = await this.components[name]();
         const componentClass = component[Object.keys(component)[0]];
 
-        const loaded = this.loadedComponents[name] = new componentClass();
+        const loaded = this.loadedComponents[name] = new componentClass(props);
         this.bindComponentAndProps(props, loaded);
 
         return loaded;
     }
 
+    /**
+     * Make component reactive properties
+     * @param {Object} props list of properties
+     * @param {Object} component component instance 
+     */
     bindComponentAndProps(props, component) {
         Object.keys(props).forEach(key => {
             Object.defineProperty(props, key, {
@@ -201,7 +220,6 @@ export class Component {
             });
         });
     }
-
 
     /**
      * Create virtual node.

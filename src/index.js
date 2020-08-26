@@ -43,42 +43,33 @@ router.push('/', () => {
  * PRODUCTS LIST PAGE
  */
 router.push('/products', () => {
-    // Use for filter products
-    const queries = router.queries;
-    const sort_field = queries.sort_field;
-    const sort = queries.sort;
-    const search = queries.search;
-
     const component = new Component({
         app: '#root',
         components: {
             'product-list': () => import(/* webpackChunkName: "product-list" */ '@/components/ProductList')
         },
-        /**
-         * Update product list sort field and rerender component
-         * @param {Event} e html input event
-         */
-        sortProducts(value, byField = false) {
-            // if (this.loaded['product-list']) {
-            //     const productList = this.loaded['product-list'];
-            //     const fieldName = (!byField) ? 'sort' : 'sort_field';
-
-            //     router.updateQuery(fieldName, value);
-
-            //     productList[fieldName] = value;
-            //     productList.update();
-            // }
-        },
     });
 
-    component.productOptions = {
-        search,
-        sort,
-        sort_field
-    };
+    component.productOptions = router.queries;
 
+    /**
+     * Filter products list
+     * @param {Event} e input event
+     */
     component.searchProducts = (function (e) {
         this.productOptions.search = e.target.value;
+        router.updateQuery('search', e.target.value);
+    }).bind(component);
+
+    /**
+     * Sort products list
+     * @param {String} value sort mode
+     * @param {Boolean} byField sort by field
+     */
+    component.sortProducts = (function (value, byField = false) {
+        const fieldName = (!byField) ? 'sort' : 'sort_field';
+        this.productOptions[fieldName] = value;
+        router.updateQuery(fieldName, value);
     }).bind(component);
 
     component.template = (function (h) {
@@ -86,32 +77,32 @@ router.push('/products', () => {
             h('h1', null, null, ['Список продуктов']),
             menu(h),
             h('input', {
-                value: search || ''
+                value: this.productOptions.search || ''
             }, {
                 input: debounce(this.searchProducts, 500),
             }, []),
             h('select', null, {
-                change: debounce((e) => this.data.sortProducts(e.target.value, false), 500),
+                change: debounce((e) => this.sortProducts(e.target.value, false), 500),
             }, [
                 h('option', {
                     value: 'asc',
-                    ...(sort === 'asc' ? {selected: true} : {})
+                    ...(this.productOptions.sort === 'asc' ? {selected: true} : {})
                 }, null, ['По возрастанию']),
                 h('option', {
                     value: 'desc',
-                    ...(sort === 'desc' ? {selected: true} : {})
+                    ...(this.productOptions.sort === 'desc' ? {selected: true} : {})
                 }, null, ['По убыванию']),
             ]),
             h('select', null, {
-                change: debounce((e) => this.data.sortProducts(e.target.value, true), 500),
+                change: debounce((e) => this.sortProducts(e.target.value, true), 500),
             }, [
                 h('option', {
                     value: 'name',
-                    ...(sort_field === 'name' ? {selected: true} : {})
+                    ...(this.productOptions.sort_field === 'name' ? {selected: true} : {})
                 }, null, ['имя']),
                 h('option', {
                     value: 'price',
-                    ...(sort_field === 'price' ? {selected: true} : {})
+                    ...(this.productOptions.sort_field === 'price' ? {selected: true} : {})
                 }, null, ['цена']),
             ]),
             h('div', {id: 'products-list'}, null, [
