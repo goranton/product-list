@@ -37,7 +37,7 @@ export class Pagination extends Component {
                 finish = total;
             }
 
-            const items =  Array.from({length: finish - start}).map((_, index) => {
+            const items =  Array.from({length: finish - start + 1}).map((_, index) => {
                 return start + index;
             }).map(value => this.paginationItem(h, value));
 
