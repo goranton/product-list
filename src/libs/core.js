@@ -139,26 +139,69 @@ export class VNode {
 export class Component {
     constructor ({
         app,
-        template,
-        created = () => {},
         data = {},
+        components = {},
     } = data) {
         this.app = document.querySelector(app);
-        this.created = created;
         this.data = data;
+
+        this.components = components;
+        this.loadedComponents = {};
         this.vNodes = [];
-
-        this.template = template;
-
-        this.template.call(this, this.h.bind(this)).then(nodes => {
-            this.vNodes = nodes;
-            this.created.apply(this);
-        });
 
         if (this.app) {
             this.flush();
         }
     }
+
+    create() {
+        this.generateVNodeTree().then((vNodes) => {
+            this.vNodes = vNodes;
+            this.render();
+        });
+    }
+
+    async template() {
+        throw new Error('must be implement.');
+    }
+
+    async generateVNodeTree() {
+        if (typeof this.template === 'object') {
+            return this.template;
+        }
+
+        return await this.template.call(this, this.h.bind(this));
+    }
+
+    async loadComponent(name, props = {}) {
+        if (!this.components.hasOwnProperty(name)) return;
+        
+        if (this.loadedComponents.hasOwnProperty(name)) {
+            return this.loadedComponents[name];
+        }
+
+        const component = await this.components[name]();
+        const componentClass = component[Object.keys(component)[0]];
+
+        const loaded = this.loadedComponents[name] = new componentClass();
+        this.bindComponentAndProps(props, loaded);
+
+        return loaded;
+    }
+
+    bindComponentAndProps(props, component) {
+        Object.keys(props).forEach(key => {
+            Object.defineProperty(props, key, {
+                get: () => component[key],
+                set: (value) => {
+                    component[key] = value;
+                    component.update();
+                    return true;
+                } 
+            });
+        });
+    }
+
 
     /**
      * Create virtual node.
@@ -167,7 +210,14 @@ export class Component {
      * @param {Object} events list of element events
      * @param {Array} child List of element childs 
      */
-    h(tag, attributes, events, child) {
+    async h(tag, attributes, events, child) {
+        const componentKeys = Object.keys(this.components);
+
+        if (componentKeys.includes(tag)) {
+            const component = await this.loadComponent(tag, attributes && attributes.props);
+            return (await component.generateVNodeTree())[0]; // return only parent node
+        }
+
         return new VNode(this.app, {tag, attributes, events, child});
     }
 
@@ -186,11 +236,7 @@ export class Component {
      */
     update() {
         this.flush();
-
-        this.template.call(this, this.h.bind(this)).then(nodes => {
-            this.vNodes = nodes;
-            this.render();
-        });
+        this.create();
     }
 
     /**
@@ -198,9 +244,10 @@ export class Component {
      * @param {Node} parent Parent dom element
      * @param {Array} nodes Virtual nodes
      */
-    async render(parent, nodes = this.vNodes) {
-        nodes.forEach(vNode => {
+    render(parent, nodes = this.vNodes) {
+        nodes.forEach(async (vNode) => {
             let element;
+            vNode = await vNode;
             
             if (!parent) {
                 parent = vNode.parentDom;

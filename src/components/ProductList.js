@@ -1,16 +1,19 @@
 import productService from '@/services/product.service';
 import { Component } from '../libs/core';
 
-export class ProductList {
+export class ProductList extends Component {
     constructor({
         search = '',
         sort = 'asc',
         sort_field = 'name',
     } = {}) {
+        super({
+            app: '#products-list',
+        });
+
         this.search = search;
         this.sort = sort;
         this.sort_field = sort_field;
-        this.load = null;
     }
 
     /**
@@ -55,23 +58,7 @@ export class ProductList {
         }
     }
 
-    component() {
-        const self = this;
-
-        this.load = new Component({
-            app: '#products-list',
-            async template(h) {
-                return [h('ul', null, null, await self.renderItems(self.search, h, self.sort, self.sort_field))];
-            },
-            created() {
-                this.render();
-            }
-        });
-
-        return this;
-    }
-
-    update() {
-        this.load.update();
+    async template(h) {
+        return [h('ul', null, null, await this.renderItems(this.search, h, this.sort, this.sort_field))];
     }
 }

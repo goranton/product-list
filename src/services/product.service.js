@@ -6,7 +6,6 @@ const sortDirections = ['asc', 'desc'];
 
 class ProductService {
     validateParams(params = {}) {
-        console.log(params, 'params');
         return Object.keys(params).reduce((acc = {}, key) => {
             let value = params[key];
 
@@ -45,7 +44,6 @@ class ProductService {
         sort_direction = sortDirections[0],
         page = 1
     } = {}) {
-        console.log(search);
         const { data: { products, ...paginate } } = await api.get('js-test-task/', {
             params: this.validateParams({search, sort_field, sort_direction, page}),
         });
