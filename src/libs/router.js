@@ -91,6 +91,6 @@ export class Router {
     }
 
     init() {
-        this.last = this.current().cb.apply({});
+        this.last = this.current().cb.apply({}, [this]);
     }
 };

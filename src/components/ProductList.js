@@ -1,13 +1,7 @@
 import { Component } from '../libs/core';
 
 export class ProductList extends Component {
-    constructor({
-        search = '',
-        sort = 'asc',
-        sort_field = 'name',
-        view = 'list',
-        items = [],
-    } = {}) {
+    constructor({view}) {
         super({
             app: '#products-list',
             components: {
@@ -15,11 +9,6 @@ export class ProductList extends Component {
             },
         });
 
-        this.search = search;
-        this.sort = sort;
-        this.sort_field = sort_field;
-
-        this.items = items; 
         this.view = view;
     }
 
@@ -54,30 +43,35 @@ export class ProductList extends Component {
     }
 
     async template(h) {
-        const items = await this.renderItems(h);
+        if (this.items) {
+            console.log(this);
+            const items = await this.renderItems(h);
 
-        if (!items.length) {
-            return [h('h1', null, null, ['Ничего не найдено.'])]
+            if (!items.length) {
+                return [h('h1', null, null, ['Ничего не найдено.'])]
+            }
+    
+            switch (this.view) {
+                case 'list':
+                    return [
+                        h('ul', null, null, items),
+                    ];
+                case 'table':
+                    return [
+                        h('table', null, null, [
+                            h('tr', null, null, [
+                                h('th', null, null, ['Название']),
+                                h('th', null, null, ['Изображение']),
+                                h('th', null, null, ['Цена']),
+                            ]),
+                            ...items,
+                        ])
+                    ];
+            }
+    
+            return [h('div', null, null, items)];
         }
 
-        switch (this.view) {
-            case 'list':
-                return [
-                    h('ul', null, null, items),
-                ];
-            case 'table':
-                return [
-                    h('table', null, null, [
-                        h('tr', null, null, [
-                            h('th', null, null, ['Название']),
-                            h('th', null, null, ['Изображение']),
-                            h('th', null, null, ['Цена']),
-                        ]),
-                        ...items,
-                    ])
-                ];
-        }
-
-        return [h('div', null, null, items)];
+        return []; // loading...
     }
 }

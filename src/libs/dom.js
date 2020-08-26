@@ -51,3 +51,15 @@ export function virtualSelect(h, defaultValue, clb, options) {
         }, null, [title]);
     }))
 }
+
+
+export function menuVirtualNode(h, router) {
+    return h('ul', {class: 'menu'}, null, [
+        h('li', null, {
+            click: () => router.goto('/'),
+        }, ['Главная']),
+        h('li', null, {
+            click: () => router.goto('/products'),
+        }, ['Продукты'])
+    ]);
+}
